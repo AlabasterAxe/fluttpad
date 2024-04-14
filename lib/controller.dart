@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_midi_command/flutter_midi_command.dart';
 import 'package:flutter_midi_command/flutter_midi_command_messages.dart';
 import 'colors.dart';
+import 'launchpad-event.dart';
+import 'launchpad-viewer.dart';
 import 'launchpad.dart';
 
 class ControllerPage extends StatelessWidget {
@@ -56,9 +58,7 @@ class PaintApplicationState extends State<PaintApplication> {
   var _nrpnCtrl = 0;
 
   // StreamSubscription<String> _setupSubscription;
-  StreamSubscription<MidiPacket>? _rxSubscription;
-
-  final _gridColors = <int, int>{};
+  StreamSubscription? _rxSubscription;
 
   var _currentColor = LaunchpadColor.WHITE;
 
@@ -66,7 +66,7 @@ class PaintApplicationState extends State<PaintApplication> {
   void didChangeDependencies() {
     this._rxSubscription?.cancel();
     this._rxSubscription =
-        this.widget.launchpad.events().listen(this._handleMessage);
+        this.widget.launchpad.events().listen(this._handleEvent);
     this._initializePad();
     super.didChangeDependencies();
   }
@@ -101,91 +101,53 @@ class PaintApplicationState extends State<PaintApplication> {
     }
   }
 
-  _handleMessage(packet) {
+  _handleEvent(LaunchpadEvent event) {
     if (kDebugMode) {
-      print('received packet $packet');
-    }
-    var data = packet.data;
-    var timestamp = packet.timestamp;
-    var device = packet.device;
-    if (kDebugMode) {
-      print(
-          "data $data @ time $timestamp from device ${device.name}:${device.id}");
+      print('received packet ${event.x}, ${event.y}, ${event.type}');
     }
 
-    if (data.length > 2 && data[2] == 127) {
-      _gridColors[data[1]] =
-          ((_gridColors[data[1]] ?? 0) + 1) % COLOR_CYCLE.length;
-      final i = data[1];
-      if (i == 89) {
-        this._currentColor = LaunchpadColor.WHITE;
-        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
-      } else if (i == 79) {
-        this._currentColor = LaunchpadColor.RED_1;
-        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
-      } else if (i == 69) {
-        this._currentColor = LaunchpadColor.ORANGE_1;
-        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
-      } else if (i == 59) {
-        this._currentColor = LaunchpadColor.YELLOW_1;
-        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
-      } else if (i == 49) {
-        this._currentColor = LaunchpadColor.GREEN_1;
-        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
-      } else if (i == 39) {
-        this._currentColor = LaunchpadColor.TEAL_1;
-        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
-      } else if (i == 29) {
-        this._currentColor = LaunchpadColor.BLUE_1;
-        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
-      } else if (i == 19) {
-        this._currentColor = LaunchpadColor.PURPLE_1;
-        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
+    if (event.type == LaunchpadEventType.padUp) {
+      return;
+    }
+
+    if (event.x < 8 && event.y < 8) {
+      final color = this.widget.launchpad.getColor(event.x, event.y);
+      if (color == this._currentColor) {
+        this.widget.launchpad.setColor(event.x, event.y, LaunchpadColor.OFF);
       } else {
-        this.widget.launchpad.setColor_midiAddress(i, this._currentColor);
+        this.widget.launchpad.setColor(event.x, event.y, this._currentColor);
       }
-    }
-
-    var status = data[0];
-
-    if (status == 0xF8) {
-      // Beat
       return;
     }
 
-    if (status == 0xFE) {
-      // Active sense;
-      return;
-    }
-
-    if (data.length >= 2) {
-      var rawStatus = status & 0xF0; // without channel
-      var channel = (status & 0x0F);
-      if (channel == _channel) {
-        var d1 = data[1];
-        switch (rawStatus) {
-          case 0xB0: // CC
-            if (d1 == _controller) {
-              // CC
-              var d2 = data[2];
-              setState(() {
-                _ccValue = d2;
-              });
-            }
-            break;
-          case 0xC0: // PC
-            setState(() {
-              _pcValue = d1;
-            });
-            break;
-          case 0xE0: // Pitch Bend
-            setState(() {
-              var rawPitch = d1 + (data[2] << 7);
-              _pitchValue = (((rawPitch) / 0x3FFF) * 2.0) - 1;
-            });
-            break;
-        }
+    if (event.x == 8) {
+      switch (event.y) {
+        case 7:
+          this._currentColor = LaunchpadColor.WHITE;
+          break;
+        case 6:
+          this._currentColor = LaunchpadColor.RED_1;
+          break;
+        case 5:
+          this._currentColor = LaunchpadColor.ORANGE_1;
+          break;
+        case 4:
+          this._currentColor = LaunchpadColor.YELLOW_1;
+          break;
+        case 3:
+          this._currentColor = LaunchpadColor.GREEN_1;
+          break;
+        case 2:
+          this._currentColor = LaunchpadColor.TEAL_1;
+          break;
+        case 1:
+          this._currentColor = LaunchpadColor.BLUE_1;
+          break;
+        case 0:
+          this._currentColor = LaunchpadColor.PURPLE_1;
+          break;
       }
+      this.widget.launchpad.setColor(8, 8, this._currentColor);
     }
   }
 
@@ -194,8 +156,7 @@ class PaintApplicationState extends State<PaintApplication> {
     if (kDebugMode) {
       print('init controller');
     }
-    _rxSubscription =
-        this.widget.launchpad.events().listen(this._handleMessage);
+    _rxSubscription = this.widget.launchpad.events().listen(this._handleEvent);
 
     super.initState();
   }
@@ -209,36 +170,7 @@ class PaintApplicationState extends State<PaintApplication> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(12),
-      children: <Widget>[
-        Text("Channel", style: Theme.of(context).textTheme.titleLarge),
-        SteppedSelector('Channel', _channel + 1, 1, 16, _onChannelChanged),
-        const Divider(),
-        Text("CC", style: Theme.of(context).textTheme.titleLarge),
-        SteppedSelector(
-            'Controller', _controller, 0, 127, _onControllerChanged),
-        SlidingSelector('Value', _ccValue, 0, 127, _onValueChanged),
-        const Divider(),
-        Text("NRPN", style: Theme.of(context).textTheme.titleLarge),
-        SteppedSelector('Parameter', _nrpnCtrl, 0, 16383, _onNRPNCtrlChanged),
-        SlidingSelector('Parameter', _nrpnCtrl, 0, 16383, _onNRPNCtrlChanged),
-        SlidingSelector('Value', _nrpnValue, 0, 16383, _onNRPNValueChanged),
-        const Divider(),
-        Text("PC", style: Theme.of(context).textTheme.titleLarge),
-        SteppedSelector('Program', _pcValue, 0, 127, _onProgramChanged),
-        const Divider(),
-        Text("Pitch Bend", style: Theme.of(context).textTheme.titleLarge),
-        Slider(
-            value: _pitchValue,
-            max: 1,
-            min: -1,
-            onChanged: _onPitchChanged,
-            onChangeEnd: (_) {
-              _onPitchChanged(0);
-            }),
-      ],
-    );
+    return LaunchpadViewer(launchpad: this.widget.launchpad);
   }
 
   _onChannelChanged(int newValue) {

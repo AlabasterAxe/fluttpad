@@ -51,7 +51,6 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> {
   late StreamSubscription<String?> _setupSubscription;
   final _launchpadController = LaunchpadController();
-  final _midiCommand = MidiCommand();
 
   @override
   void initState() {
@@ -70,19 +69,6 @@ class MyAppState extends State<MyApp> {
   void dispose() {
     _setupSubscription.cancel();
     super.dispose();
-  }
-
-  IconData _deviceIconForType(String type) {
-    switch (type) {
-      case "native":
-        return Icons.devices;
-      case "network":
-        return Icons.language;
-      case "BLE":
-        return Icons.bluetooth;
-      default:
-        return Icons.device_unknown;
-    }
   }
 
   @override

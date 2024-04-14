@@ -5,6 +5,7 @@ import 'package:flutter_launchpad/colors.dart';
 import 'package:flutter_midi_command/flutter_midi_command.dart';
 import 'package:rxdart/rxdart.dart';
 
+import 'launchpad-event.dart';
 import 'launchpad-models.dart';
 
 class Launchpad {
@@ -12,6 +13,7 @@ class Launchpad {
   final MidiDevice device;
   final MidiCommand _midiCommand;
   StreamSubscription? _eventSubscription;
+  final _colorValues = <int, LaunchpadColor>{};
   final _midiEvents = BehaviorSubject<MidiPacket>();
   Launchpad._({required this.model, required this.device, required midiCommand})
       : _midiCommand = midiCommand {
@@ -56,22 +58,32 @@ class Launchpad {
     throw Exception("Unknown Launchpad model");
   }
 
+  _midiAddressToPoint(int midiAddress) {
+    if (model == LaunchpadModel.MINI_MK3) {
+      return (x: midiAddress % 10 - 1, y: midiAddress ~/ 10 - 1);
+    }
+    throw Exception("Unknown Launchpad model");
+  }
+
   setColor(int x, int y, LaunchpadColor color,
       [LaunchpadLightMode mode = LaunchpadLightMode.STATIC]) {
     final midiAddress = _pointToMidiAddress(x, y);
+    this._colorValues[midiAddress] = color;
     this
         ._midiCommand
         .sendData(Uint8List.fromList([mode.value, midiAddress, color.value]));
   }
 
-  setColor_midiAddress(int midiAddress, LaunchpadColor color,
-      [LaunchpadLightMode mode = LaunchpadLightMode.STATIC]) {
-    this
-        ._midiCommand
-        .sendData(Uint8List.fromList([mode.value, midiAddress, color.value]));
+  LaunchpadColor getColor(int x, int y) {
+    final midiAddress = _pointToMidiAddress(x, y);
+    return this._colorValues[midiAddress] ?? LaunchpadColor.OFF;
   }
 
-  events() {
-    return this._midiEvents;
+  Stream<LaunchpadEvent> events() {
+    return this._midiEvents.map(
+      (event) {
+        return LaunchpadEvent(event);
+      },
+    );
   }
 }
