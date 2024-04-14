@@ -4,12 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_midi_command/flutter_midi_command.dart';
 import 'package:flutter_midi_command/flutter_midi_command_messages.dart';
-import 'package:flutter_virtual_piano/flutter_virtual_piano.dart';
+import 'colors.dart';
+import 'launchpad.dart';
 
 class ControllerPage extends StatelessWidget {
-  final MidiDevice device;
+  final Launchpad launchpad;
 
-  const ControllerPage(this.device, {Key? key}) : super(key: key);
+  const ControllerPage(this.launchpad, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,23 +18,35 @@ class ControllerPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Controls'),
       ),
-      body: MidiControls(device),
+      body: PaintApplication(launchpad),
     );
   }
 }
 
-class MidiControls extends StatefulWidget {
-  final MidiDevice device;
+class PaintApplication extends StatefulWidget {
+  final Launchpad launchpad;
 
-  const MidiControls(this.device, {Key? key}) : super(key: key);
+  const PaintApplication(this.launchpad, {super.key});
 
   @override
-  MidiControlsState createState() {
-    return MidiControlsState();
+  PaintApplicationState createState() {
+    return PaintApplicationState();
   }
 }
 
-class MidiControlsState extends State<MidiControls> {
+const COLOR_CYCLE = <LaunchpadColor>[
+  LaunchpadColor.OFF,
+  LaunchpadColor.WHITE,
+  LaunchpadColor.RED_1,
+  LaunchpadColor.ORANGE_1,
+  LaunchpadColor.YELLOW_1,
+  LaunchpadColor.GREEN_1,
+  LaunchpadColor.TEAL_1,
+  LaunchpadColor.BLUE_1,
+  LaunchpadColor.PURPLE_1
+];
+
+class PaintApplicationState extends State<PaintApplication> {
   var _channel = 0;
   var _controller = 0;
   var _ccValue = 0;
@@ -44,69 +57,145 @@ class MidiControlsState extends State<MidiControls> {
 
   // StreamSubscription<String> _setupSubscription;
   StreamSubscription<MidiPacket>? _rxSubscription;
-  final MidiCommand _midiCommand = MidiCommand();
+
+  final _gridColors = <int, int>{};
+
+  var _currentColor = LaunchpadColor.WHITE;
+
+  @override
+  void didChangeDependencies() {
+    this._rxSubscription?.cancel();
+    this._rxSubscription =
+        this.widget.launchpad.events().listen(this._handleMessage);
+    this._initializePad();
+    super.didChangeDependencies();
+  }
+
+  _initializePad() {
+    for (var x = 0; x < 10; x++) {
+      for (var y = 0; y < 10; y++) {
+        if (x == 8) {
+          if (y == 8) {
+            this.widget.launchpad.setColor(x, y, this._currentColor);
+          } else if (y == 7) {
+            this.widget.launchpad.setColor(x, y, LaunchpadColor.WHITE);
+          } else if (y == 6) {
+            this.widget.launchpad.setColor(x, y, LaunchpadColor.RED_1);
+          } else if (y == 5) {
+            this.widget.launchpad.setColor(x, y, LaunchpadColor.ORANGE_1);
+          } else if (y == 4) {
+            this.widget.launchpad.setColor(x, y, LaunchpadColor.YELLOW_1);
+          } else if (y == 3) {
+            this.widget.launchpad.setColor(x, y, LaunchpadColor.GREEN_1);
+          } else if (y == 2) {
+            this.widget.launchpad.setColor(x, y, LaunchpadColor.TEAL_1);
+          } else if (y == 1) {
+            this.widget.launchpad.setColor(x, y, LaunchpadColor.BLUE_1);
+          } else if (y == 0) {
+            this.widget.launchpad.setColor(x, y, LaunchpadColor.PURPLE_1);
+          }
+        } else {
+          this.widget.launchpad.setColor(x, y, LaunchpadColor.OFF);
+        }
+      }
+    }
+  }
+
+  _handleMessage(packet) {
+    if (kDebugMode) {
+      print('received packet $packet');
+    }
+    var data = packet.data;
+    var timestamp = packet.timestamp;
+    var device = packet.device;
+    if (kDebugMode) {
+      print(
+          "data $data @ time $timestamp from device ${device.name}:${device.id}");
+    }
+
+    if (data.length > 2 && data[2] == 127) {
+      _gridColors[data[1]] =
+          ((_gridColors[data[1]] ?? 0) + 1) % COLOR_CYCLE.length;
+      final i = data[1];
+      if (i == 89) {
+        this._currentColor = LaunchpadColor.WHITE;
+        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
+      } else if (i == 79) {
+        this._currentColor = LaunchpadColor.RED_1;
+        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
+      } else if (i == 69) {
+        this._currentColor = LaunchpadColor.ORANGE_1;
+        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
+      } else if (i == 59) {
+        this._currentColor = LaunchpadColor.YELLOW_1;
+        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
+      } else if (i == 49) {
+        this._currentColor = LaunchpadColor.GREEN_1;
+        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
+      } else if (i == 39) {
+        this._currentColor = LaunchpadColor.TEAL_1;
+        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
+      } else if (i == 29) {
+        this._currentColor = LaunchpadColor.BLUE_1;
+        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
+      } else if (i == 19) {
+        this._currentColor = LaunchpadColor.PURPLE_1;
+        this.widget.launchpad.setColor_midiAddress(99, this._currentColor);
+      } else {
+        this.widget.launchpad.setColor_midiAddress(i, this._currentColor);
+      }
+    }
+
+    var status = data[0];
+
+    if (status == 0xF8) {
+      // Beat
+      return;
+    }
+
+    if (status == 0xFE) {
+      // Active sense;
+      return;
+    }
+
+    if (data.length >= 2) {
+      var rawStatus = status & 0xF0; // without channel
+      var channel = (status & 0x0F);
+      if (channel == _channel) {
+        var d1 = data[1];
+        switch (rawStatus) {
+          case 0xB0: // CC
+            if (d1 == _controller) {
+              // CC
+              var d2 = data[2];
+              setState(() {
+                _ccValue = d2;
+              });
+            }
+            break;
+          case 0xC0: // PC
+            setState(() {
+              _pcValue = d1;
+            });
+            break;
+          case 0xE0: // Pitch Bend
+            setState(() {
+              var rawPitch = d1 + (data[2] << 7);
+              _pitchValue = (((rawPitch) / 0x3FFF) * 2.0) - 1;
+            });
+            break;
+        }
+      }
+    }
+  }
 
   @override
   void initState() {
     if (kDebugMode) {
       print('init controller');
     }
-    _rxSubscription = _midiCommand.onMidiDataReceived?.listen((packet) {
-      if (kDebugMode) {
-        print('received packet $packet');
-      }
-      var data = packet.data;
-      var timestamp = packet.timestamp;
-      var device = packet.device;
-      if (kDebugMode) {
-        print(
-            "data $data @ time $timestamp from device ${device.name}:${device.id}");
-      }
-      _midiCommand.sendData(Uint8List.fromList([144, data[1], 5]),
-          deviceId: device.id);
-
-      var status = data[0];
-
-      if (status == 0xF8) {
-        // Beat
-        return;
-      }
-
-      if (status == 0xFE) {
-        // Active sense;
-        return;
-      }
-
-      if (data.length >= 2) {
-        var rawStatus = status & 0xF0; // without channel
-        var channel = (status & 0x0F);
-        if (channel == _channel) {
-          var d1 = data[1];
-          switch (rawStatus) {
-            case 0xB0: // CC
-              if (d1 == _controller) {
-                // CC
-                var d2 = data[2];
-                setState(() {
-                  _ccValue = d2;
-                });
-              }
-              break;
-            case 0xC0: // PC
-              setState(() {
-                _pcValue = d1;
-              });
-              break;
-            case 0xE0: // Pitch Bend
-              setState(() {
-                var rawPitch = d1 + (data[2] << 7);
-                _pitchValue = (((rawPitch) / 0x3FFF) * 2.0) - 1;
-              });
-              break;
-          }
-        }
-      }
-    });
+    _rxSubscription =
+        this.widget.launchpad.events().listen(this._handleMessage);
 
     super.initState();
   }
@@ -148,19 +237,6 @@ class MidiControlsState extends State<MidiControls> {
             onChangeEnd: (_) {
               _onPitchChanged(0);
             }),
-        const Divider(),
-        SizedBox(
-          height: 80,
-          child: VirtualPiano(
-            noteRange: const RangeValues(48, 76),
-            onNotePressed: (note, vel) {
-              NoteOnMessage(note: note, velocity: 100).send();
-            },
-            onNoteReleased: (note) {
-              NoteOffMessage(note: note).send();
-            },
-          ),
-        )
       ],
     );
   }
@@ -223,8 +299,7 @@ class SteppedSelector extends StatelessWidget {
 
   const SteppedSelector(
       this.label, this.value, this.minValue, this.maxValue, this.callback,
-      {Key? key})
-      : super(key: key);
+      {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -261,8 +336,7 @@ class SlidingSelector extends StatelessWidget {
 
   const SlidingSelector(
       this.label, this.value, this.minValue, this.maxValue, this.callback,
-      {Key? key})
-      : super(key: key);
+      {super.key});
 
   @override
   Widget build(BuildContext context) {

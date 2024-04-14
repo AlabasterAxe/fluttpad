@@ -99,14 +99,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_virtual_piano:
-    dependency: "direct main"
-    description:
-      name: flutter_virtual_piano
-      sha256: ee68937d7566dba343ef2710d8a1a98651f7b91765a2adb62d005c386aee1c0b
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.9"
   leak_tracker:
     dependency: transitive
     description:
@@ -187,6 +179,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  rxdart:
+    dependency: "direct main"
+    description:
+      name: rxdart
+      sha256: "0c7c0cedd93788d996e33041ffecda924cc54389199cde4e6a34b440f50044cb"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.27.7"
   sky_engine:
     dependency: transitive
     description: flutter
