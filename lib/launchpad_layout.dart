@@ -105,9 +105,6 @@ class LaunchpadLayout implements LaunchpadReader {
       if (pad.onTap != null) _handlers['$x,$y'] = pad.onTap!;
       this.launchpad.setColor(x, y, pad.color);
     }
-    if (this.upArrow != null) {
-      _handlers['8,7'] = this.upArrow!.onTap!;
-    }
 
     for (final (pad, (x, y)) in [
       (this.upArrow, (0, 8)),
