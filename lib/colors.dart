@@ -29,18 +29,18 @@ enum LaunchpadColor {
   TEAL_1(33, Color(0xFF00FFFF)),
   TEAL_2(34, Color(0xFF00CCCC)),
   TEAL_3(35, Color(0xFF009999)),
-  PALE_BLUE(40, Color(0xFF99CCFF)),
-  BLUE_1(41, Color(0xFF0000FF)),
-  BLUE_2(42, Color(0xFF0000CC)),
-  BLUE_3(43, Color(0xFF000099)),
-  PALE_INDIGO(44, Color(0xFFCC99FF)),
-  INDIGO_1(45, Color(0xFF6600FF)),
-  INDIGO_2(46, Color(0xFF3300CC)),
-  INDIGO_3(47, Color(0xFF330099)),
-  PALE_PURPLE(48, Color(0xFFFF99FF)),
-  PURPLE_1(49, Color(0xFFFF00FF)),
-  PURPLE_2(50, Color(0xFFCC00CC)),
-  PURPLE_3(51, Color(0xFF990099));
+  PALE_BLUE(40, Color(0xFFc3ddff)),
+  BLUE_1(41, Color.fromARGB(255, 41, 155, 255)),
+  BLUE_2(42, Color(0xFF61a1dd)),
+  BLUE_3(43, Color(0xFF6281b3)),
+  PALE_INDIGO(44, Color(0xFFa18cff)),
+  INDIGO_1(45, Color(0xFF6161ff)),
+  INDIGO_2(46, Color(0xFF6161dd)),
+  INDIGO_3(47, Color(0xFF6161b3)),
+  PALE_PURPLE(48, Color(0xFFcdb3ff)),
+  PURPLE_1(49, Color.fromARGB(255, 152, 85, 251)),
+  PURPLE_2(50, Color(0xFF8261dd)),
+  PURPLE_3(51, Color(0xFF7661b3));
 
   const LaunchpadColor(this.value, this.color);
   final int value;
