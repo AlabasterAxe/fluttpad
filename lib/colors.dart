@@ -1,7 +1,6 @@
-import 'dart:math';
-import 'dart:ui';
+import 'dart:ui' show Color;
 
-import 'package:flutter/painting.dart';
+import 'package:flutter/painting.dart' show RadialGradient;
 
 enum LaunchpadColor {
   OFF(0, Color(0xFF000000)),
