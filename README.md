@@ -2,7 +2,7 @@
 
 This is a little utility to control the Novation Launchpad. At the time of writing (April 2024), it is tailored to the Launchpad Mini 3 but should be generalizable to other Launchpad models.
 
-![The LaunchpadViewer Widget](/doc/viewer.png)
+![The LaunchpadViewer Widget](https://raw.githubusercontent.com/AlabasterAxe/fluttpad/master/doc/viewer.png)
 
 ## Getting Started
 
