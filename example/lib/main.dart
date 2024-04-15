@@ -34,6 +34,7 @@ class _LaunchpadExampleAppState extends State<LaunchpadExampleApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: FutureBuilder<LaunchpadController?>(
             future: _launchpad,

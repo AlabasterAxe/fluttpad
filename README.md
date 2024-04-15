@@ -2,6 +2,8 @@
 
 This is a little utility to control the Novation Launchpad. At the time of writing (April 2024), it is tailored to the Launchpad Mini 3 but should be generalizable to other Launchpad models.
 
+![The LaunchpadViewer Widget](/docs/viewer.png)
+
 ## Getting Started
 
 To get the list of attached Launchpads, you can create a singleton LaunchpadService instance. That will provide you with a list of LaunchpadControllers that you can use to read data from and push colors to.
