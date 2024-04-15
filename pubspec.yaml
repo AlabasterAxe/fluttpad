@@ -31,6 +31,7 @@ dependencies:
     sdk: flutter
 
   flutter_midi_command: ^0.4.15
+  google_fonts: ^6.2.1
   rxdart: ^0.27.7
 
 dev_dependencies:
@@ -54,6 +55,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/novation.png
+    - assets/google_fonts/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

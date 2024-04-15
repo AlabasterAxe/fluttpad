@@ -1,4 +1,7 @@
+import 'dart:math';
 import 'dart:ui';
+
+import 'package:flutter/painting.dart';
 
 enum LaunchpadColor {
   OFF(0, Color(0xFF000000)),
@@ -50,6 +53,19 @@ enum LaunchpadColor {
       }
     }
   }
+
+  get padGradient => RadialGradient(
+        colors: [
+          this == LaunchpadColor.OFF ? UNLIT_PAD : this.color,
+          this == LaunchpadColor.OFF
+              ? UNLIT_PAD
+              : Color.alphaBlend(
+                  this.color.withOpacity(.3),
+                  UNLIT_PAD,
+                ),
+        ],
+        stops: const [0.0, 1.0],
+      );
 }
 
 enum LaunchpadLightMode {
@@ -60,3 +76,5 @@ enum LaunchpadLightMode {
   const LaunchpadLightMode(this.value);
   final int value;
 }
+
+const UNLIT_PAD = Color.fromARGB(255, 127, 127, 127);

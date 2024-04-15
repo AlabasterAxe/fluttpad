@@ -49,15 +49,6 @@ const COLOR_CYCLE = <LaunchpadColor>[
 ];
 
 class PaintApplicationState extends State<PaintApplication> {
-  var _channel = 0;
-  var _controller = 0;
-  var _ccValue = 0;
-  var _pcValue = 0;
-  var _pitchValue = 0.0;
-  var _nrpnValue = 0;
-  var _nrpnCtrl = 0;
-
-  // StreamSubscription<String> _setupSubscription;
   StreamSubscription? _rxSubscription;
 
   var _currentColor = LaunchpadColor.WHITE;
@@ -101,27 +92,19 @@ class PaintApplicationState extends State<PaintApplication> {
     }
   }
 
-  _handleEvent(LaunchpadEvent event) {
-    if (kDebugMode) {
-      print('received packet ${event.x}, ${event.y}, ${event.type}');
-    }
-
-    if (event.type == LaunchpadEventType.padUp) {
-      return;
-    }
-
-    if (event.x < 8 && event.y < 8) {
-      final color = this.widget.launchpad.getColor(event.x, event.y);
+  _handleXYClick(int x, int y) {
+    if (x < 8 && y < 8) {
+      final color = this.widget.launchpad.getColor(x, y);
       if (color == this._currentColor) {
-        this.widget.launchpad.setColor(event.x, event.y, LaunchpadColor.OFF);
+        this.widget.launchpad.setColor(x, y, LaunchpadColor.OFF);
       } else {
-        this.widget.launchpad.setColor(event.x, event.y, this._currentColor);
+        this.widget.launchpad.setColor(x, y, this._currentColor);
       }
       return;
     }
 
-    if (event.x == 8) {
-      switch (event.y) {
+    if (x == 8) {
+      switch (y) {
         case 7:
           this._currentColor = LaunchpadColor.WHITE;
           break;
@@ -151,6 +134,18 @@ class PaintApplicationState extends State<PaintApplication> {
     }
   }
 
+  _handleEvent(LaunchpadEvent event) {
+    if (kDebugMode) {
+      print('received packet ${event.x}, ${event.y}, ${event.type}');
+    }
+
+    if (event.type == LaunchpadEventType.padUp) {
+      return;
+    }
+
+    this._handleXYClick(event.x, event.y);
+  }
+
   @override
   void initState() {
     if (kDebugMode) {
@@ -170,55 +165,8 @@ class PaintApplicationState extends State<PaintApplication> {
 
   @override
   Widget build(BuildContext context) {
-    return LaunchpadViewer(launchpad: this.widget.launchpad);
-  }
-
-  _onChannelChanged(int newValue) {
-    setState(() {
-      _channel = newValue - 1;
-    });
-  }
-
-  _onControllerChanged(int newValue) {
-    setState(() {
-      _controller = newValue;
-    });
-  }
-
-  _onProgramChanged(int newValue) {
-    setState(() {
-      _pcValue = newValue;
-    });
-    PCMessage(channel: _channel, program: _pcValue).send();
-  }
-
-  _onValueChanged(int newValue) {
-    setState(() {
-      _ccValue = newValue;
-    });
-    CCMessage(channel: _channel, controller: _controller, value: _ccValue)
-        .send();
-  }
-
-  _onNRPNValueChanged(int newValue) {
-    setState(() {
-      _nrpnValue = newValue;
-    });
-    NRPN4Message(channel: _channel, parameter: _nrpnCtrl, value: _nrpnValue)
-        .send();
-  }
-
-  _onNRPNCtrlChanged(int newValue) {
-    setState(() {
-      _nrpnCtrl = newValue;
-    });
-  }
-
-  _onPitchChanged(double newValue) {
-    setState(() {
-      _pitchValue = newValue;
-    });
-    PitchBendMessage(channel: _channel, bend: _pitchValue).send();
+    return LaunchpadViewer(
+        launchpad: this.widget.launchpad, onTap: this._handleXYClick);
   }
 }
 

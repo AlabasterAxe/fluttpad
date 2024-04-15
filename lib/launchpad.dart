@@ -58,13 +58,6 @@ class Launchpad {
     throw Exception("Unknown Launchpad model");
   }
 
-  _midiAddressToPoint(int midiAddress) {
-    if (model == LaunchpadModel.MINI_MK3) {
-      return (x: midiAddress % 10 - 1, y: midiAddress ~/ 10 - 1);
-    }
-    throw Exception("Unknown Launchpad model");
-  }
-
   setColor(int x, int y, LaunchpadColor color,
       [LaunchpadLightMode mode = LaunchpadLightMode.STATIC]) {
     final midiAddress = _pointToMidiAddress(x, y);
