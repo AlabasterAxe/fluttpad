@@ -46,7 +46,8 @@ class _LaunchpadMini3State extends State<LaunchpadMini3> {
   void initState() {
     super.initState();
 
-    this._eventSubscription = this.widget.launchpad.events().listen((_) {
+    this._eventSubscription = this.widget.launchpad.events().listen((e) {
+      this.widget.onTap?.call(e.x, e.y);
       setState(() {});
     });
   }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_launchpad/launchpad_models.dart';
 import 'package:flutter_launchpad/viewer/launchpad_mini_3.dart';
 
-import '../launchpad_controller.dart';
 import '../launchpad_reader.dart';
 
 class LaunchpadViewer extends StatelessWidget {

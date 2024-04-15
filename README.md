@@ -1,6 +1,6 @@
-# fluttpad
+# Flutter Launchpad
 
-A new Flutter project.
+This is a little utility to control the Novation Launchpad. At the time of writing (April 2024), it is tailored to the Launchpad Mini 3 but should be generalizable to other Launchpad models.
 
 ## Getting Started
 

@@ -1,131 +1,69 @@
-import 'dart:async' show StreamSubscription;
-
-import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:flutter/material.dart'
-    show
-        AppBar,
-        CircularProgressIndicator,
-        Icons,
-        ListTile,
-        MaterialApp,
-        MaterialPageRoute,
-        Scaffold,
-        ScaffoldMessenger,
-        SnackBar,
-        Theme;
-import 'package:flutter/painting.dart' show EdgeInsets, TextAlign;
-import 'package:flutter/services.dart' show PlatformException;
-import 'package:flutter/widgets.dart'
-    show
-        AsyncSnapshot,
-        BuildContext,
-        Center,
-        Container,
-        FutureBuilder,
-        Icon,
-        ListView,
-        Navigator,
-        State,
-        StatefulWidget,
-        Text,
-        Widget,
-        runApp;
+import 'package:flutter/material.dart';
+import 'package:flutter_launchpad/colors.dart';
 import 'package:flutter_launchpad/launchpad_controller.dart';
-import 'package:flutter_launchpad/launchpad_models.dart';
 import 'package:flutter_launchpad/launchpad_service.dart';
+import 'package:flutter_launchpad/viewer.dart';
 
-import 'app_chooser.dart';
+void main() => runApp(const LaunchpadExampleApp());
 
-void main() => runApp(const MyApp());
-
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class LaunchpadExampleApp extends StatefulWidget {
+  const LaunchpadExampleApp({super.key});
 
   @override
-  MyAppState createState() => MyAppState();
+  State<LaunchpadExampleApp> createState() => _LaunchpadExampleAppState();
 }
 
-class MyAppState extends State<MyApp> {
-  late StreamSubscription<String?> _setupSubscription;
-  final _launchpadController = LaunchpadService();
+class _LaunchpadExampleAppState extends State<LaunchpadExampleApp> {
+  // The LaunchpadService is responsible for providing information about any
+  // Launchpads that are connected to the system.
+  final _launchpadService = LaunchpadService();
 
-  @override
-  void initState() {
-    super.initState();
-
-    _setupSubscription =
-        _launchpadController.watchMidiSetup().listen((data) async {
-      if (kDebugMode) {
-        print("setup changed $data");
+  // The LaunchpadController manages the connection to a specific Launchpad.
+  late final Future<LaunchpadController?> _launchpad =
+      _launchpadService.listLaunchpads().then((value) async {
+    final controller = value.firstOrNull;
+    if (controller != null) {
+      controller.clear();
+      if (!controller.connected) {
+        await controller.connect();
       }
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _setupSubscription.cancel();
-    super.dispose();
-  }
+    }
+    return controller;
+  });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('FlutterMidiCommand Example'),
-        ),
-        bottomNavigationBar: Container(
-          padding: const EdgeInsets.all(24.0),
-          child: const Text(
-            "Tap to connnect/disconnect, long press to control.",
-            textAlign: TextAlign.center,
-          ),
-        ),
-        body: Center(
-          child: FutureBuilder(
-            future: _launchpadController.listLaunchpads(),
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.hasData && snapshot.data != null) {
-                var launchpads = snapshot.data as List<LaunchpadController>;
-                return ListView.builder(
-                  itemCount: launchpads.length,
-                  itemBuilder: (context, index) {
-                    LaunchpadController launchpad = launchpads[index];
+        body: FutureBuilder<LaunchpadController?>(
+            future: _launchpad,
+            builder: (context, snapshot) {
+              final controller = snapshot.data;
+              if (controller != null) {
+                return Center(
+                  // The LaunchpadViewer is a widget that displays the current
+                  // state. For a higher-level API, see the LaunchpadLayout widget.
+                  child: LaunchpadViewer(
+                    launchpad: controller,
 
-                    return ListTile(
-                      title: Text(
-                        launchpad.model.prettyName,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      subtitle: Text(launchpad.id),
-                      leading: Icon(launchpad.connected
-                          ? Icons.radio_button_on
-                          : Icons.radio_button_off),
-                      onTap: () {
-                        launchpad.connect().then((_) {
-                          Navigator.of(context)
-                              .push(MaterialPageRoute<void>(
-                            builder: (_) => AppChooser(launchpad: launchpad),
-                          ))
-                              .then((value) {
-                            setState(() {});
-                          });
-                        }).catchError((err) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                                  "Error: ${(err as PlatformException?)?.message}")));
-                        });
-                      },
-                    );
-                  },
+                    // The onTap callback is called whenever a pad is pressed on the physical Launchpad
+                    // or when a pad is pressed on the LaunchpadViewer widget.
+                    onTap: (x, y) {
+                      // The controller provides the ability to set/get the color of a pad.
+                      controller.setColor(x, y, LaunchpadColor.WHITE);
+                    },
+                  ),
+                );
+              } else if (snapshot.hasError) {
+                return const Center(
+                  child: Text('Error loading Launchpad'),
                 );
               } else {
-                return const CircularProgressIndicator();
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
               }
-            },
-          ),
-        ),
+            }),
       ),
     );
   }
