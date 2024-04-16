@@ -1,6 +1,6 @@
 name: flutter_launchpad
 description: "Flutter Library to control Novation Launchpad MIDI devices"
-version: 1.0.1+4
+version: 1.0.2+5
 
 repository: https://github.com/AlabasterAxe/fluttpad
 
