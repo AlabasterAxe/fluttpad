@@ -16,6 +16,12 @@ class LaunchpadController implements LaunchpadReader {
   StreamSubscription? _eventSubscription;
   final _colorValues = <int, LaunchpadColor>{};
   final _midiEvents = BehaviorSubject<MidiPacket>();
+  late Timer _clockTimer = Timer.periodic(Duration(milliseconds: 30), (timer) {
+    this
+        ._midiCommand
+        .sendData(Uint8List.fromList([248]), deviceId: this.device.id);
+  });
+
   LaunchpadController._(
       {required this.model, required this.device, required midiCommand})
       : _midiCommand = midiCommand {
@@ -25,8 +31,19 @@ class LaunchpadController implements LaunchpadReader {
     });
   }
 
+  setTempo(int tempo) {
+    this._clockTimer.cancel();
+    this._clockTimer = Timer.periodic(
+        Duration(milliseconds: (60000 / (tempo * 24)).round()), (timer) {
+      this
+          ._midiCommand
+          .sendData(Uint8List.fromList([248]), deviceId: this.device.id);
+    });
+  }
+
   dispose() {
     this._eventSubscription?.cancel();
+    this._clockTimer.cancel();
   }
 
   factory LaunchpadController.fromDevice(
@@ -64,7 +81,9 @@ class LaunchpadController implements LaunchpadReader {
     }
 
     data.add(247);
-    this._midiCommand.sendData(Uint8List.fromList(data));
+    this
+        ._midiCommand
+        .sendData(Uint8List.fromList(data), deviceId: this.device.id);
   }
 
   _pointToMidiAddress(int x, int y) {

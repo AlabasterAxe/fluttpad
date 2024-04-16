@@ -12,32 +12,34 @@ import 'launchpad_reader.dart';
 class LaunchpadPad {
   final LaunchpadColor color;
   final VoidCallback? onTap;
-  const LaunchpadPad({required this.color, this.onTap});
+  final LaunchpadLightMode mode;
+  const LaunchpadPad(
+      {required this.color, this.onTap, this.mode = LaunchpadLightMode.STATIC});
 }
 
 class LaunchpadLayout implements LaunchpadReader {
   final LaunchpadController launchpad;
-  final List<LaunchpadPad> pads;
-  final LaunchpadPad? upArrow;
-  final LaunchpadPad? downArrow;
-  final LaunchpadPad? leftArrow;
-  final LaunchpadPad? rightArrow;
-  final LaunchpadPad? sessionButton;
-  final LaunchpadPad? drumsButton;
-  final LaunchpadPad? keysButton;
-  final LaunchpadPad? userButton;
-  final LaunchpadPad? stopSoloMuteButton;
-  final List<LaunchpadPad> sceneButtons;
-  final LaunchpadColor logo;
+  late List<LaunchpadPad> pads;
+  LaunchpadPad? upArrow;
+  LaunchpadPad? downArrow;
+  LaunchpadPad? leftArrow;
+  LaunchpadPad? rightArrow;
+  LaunchpadPad? sessionButton;
+  LaunchpadPad? drumsButton;
+  LaunchpadPad? keysButton;
+  LaunchpadPad? userButton;
+  late List<LaunchpadPad> sceneButtons;
+  LaunchpadPad? stopSoloMuteButton;
+  LaunchpadColor logo;
 
   LaunchpadLayout({
     required this.launchpad,
-    this.pads = const <LaunchpadPad>[],
+    pads,
     this.upArrow,
     this.downArrow,
     this.leftArrow,
     this.rightArrow,
-    this.sceneButtons = const <LaunchpadPad>[],
+    sceneButtons,
     this.sessionButton,
     this.drumsButton,
     this.keysButton,
@@ -45,8 +47,39 @@ class LaunchpadLayout implements LaunchpadReader {
     this.stopSoloMuteButton,
     this.logo = LaunchpadColor.OFF,
   }) {
+    this.pads = pads ?? [];
+    this.sceneButtons = sceneButtons ?? [];
     this._rxSubscription = this.launchpad.events().listen(this._handleEvent);
-    this._initPads();
+    this._pushState();
+  }
+
+  setState({
+    List<LaunchpadPad>? pads,
+    LaunchpadPad? upArrow,
+    LaunchpadPad? downArrow,
+    LaunchpadPad? leftArrow,
+    LaunchpadPad? rightArrow,
+    LaunchpadPad? sessionButton,
+    LaunchpadPad? drumsButton,
+    LaunchpadPad? keysButton,
+    LaunchpadPad? userButton,
+    List<LaunchpadPad>? sceneButtons,
+    LaunchpadPad? stopSoloMuteButton,
+    LaunchpadColor? logo,
+  }) {
+    this.pads = pads ?? this.pads;
+    this.upArrow = upArrow ?? this.upArrow;
+    this.downArrow = downArrow ?? this.downArrow;
+    this.leftArrow = leftArrow ?? this.leftArrow;
+    this.rightArrow = rightArrow ?? this.rightArrow;
+    this.sessionButton = sessionButton ?? this.sessionButton;
+    this.drumsButton = drumsButton ?? this.drumsButton;
+    this.keysButton = keysButton ?? this.keysButton;
+    this.userButton = userButton ?? this.userButton;
+    this.sceneButtons = sceneButtons ?? this.sceneButtons;
+    this.stopSoloMuteButton = stopSoloMuteButton ?? this.stopSoloMuteButton;
+    this.logo = logo ?? this.logo;
+    this._pushState();
   }
 
   @override
@@ -93,17 +126,17 @@ class LaunchpadLayout implements LaunchpadReader {
     return (8, 7 - index);
   }
 
-  _initPads() {
+  _pushState() {
     this.launchpad.clear();
     for (final (i, pad) in this.pads.indexed) {
       final (x, y) = this._padIndexToXY(i);
       if (pad.onTap != null) _handlers['$x,$y'] = pad.onTap!;
-      this.launchpad.setColor(x, y, pad.color);
+      this.launchpad.setColor(x, y, pad.color, pad.mode);
     }
     for (final (i, pad) in this.sceneButtons.indexed) {
       final (x, y) = this._sceneButtonToXY(i);
       if (pad.onTap != null) _handlers['$x,$y'] = pad.onTap!;
-      this.launchpad.setColor(x, y, pad.color);
+      this.launchpad.setColor(x, y, pad.color, pad.mode);
     }
 
     for (final (pad, (x, y)) in [
@@ -121,7 +154,7 @@ class LaunchpadLayout implements LaunchpadReader {
         if (pad.onTap != null) {
           this._handlers['$x,$y'] = pad.onTap!;
         }
-        this.launchpad.setColor(x, y, pad.color);
+        this.launchpad.setColor(x, y, pad.color, pad.mode);
       }
     }
 
