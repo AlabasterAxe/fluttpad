@@ -60,14 +60,23 @@ class LaunchpadController implements LaunchpadReader {
 
   get connected => device.connected;
 
-  connect() async {
+  Future<void> connect() async {
     if (device.connected) {
       return;
     }
     await this._midiCommand.connectToDevice(device);
+
+    // sets the launchpad to programmer mode
+    this
+        ._midiCommand
+        .sendData(Uint8List.fromList([240, 0, 32, 41, 2, 13, 0, 127, 247]));
   }
 
   disconnect() {
+    // sets the launchpad to keys mode
+    this
+        ._midiCommand
+        .sendData(Uint8List.fromList([240, 0, 32, 41, 2, 13, 0, 5, 247]));
     this._midiCommand.disconnectDevice(device);
   }
 
