@@ -53,6 +53,18 @@ enum LaunchpadColor {
     }
   }
 
+  get dimmed => switch (this) {
+        LaunchpadColor.RED_1 => LaunchpadColor.RED_3,
+        LaunchpadColor.ORANGE_1 => LaunchpadColor.ORANGE_3,
+        LaunchpadColor.YELLOW_1 => LaunchpadColor.YELLOW_3,
+        LaunchpadColor.GREEN_1 => LaunchpadColor.GREEN_3,
+        LaunchpadColor.TEAL_1 => LaunchpadColor.TEAL_3,
+        LaunchpadColor.BLUE_1 => LaunchpadColor.BLUE_3,
+        LaunchpadColor.INDIGO_1 => LaunchpadColor.INDIGO_3,
+        LaunchpadColor.PURPLE_1 => LaunchpadColor.PURPLE_3,
+        _ => throw Exception('Color does not support dimming.')
+      };
+
   get padGradient => RadialGradient(
         colors: [
           this == LaunchpadColor.OFF ? UNLIT_PAD : this.color,
@@ -69,8 +81,7 @@ enum LaunchpadColor {
 
 enum LaunchpadLightMode {
   STATIC(144),
-  FLASH(145),
-  PULSE(146);
+  FLASH(145);
 
   const LaunchpadLightMode(this.value);
   final int value;

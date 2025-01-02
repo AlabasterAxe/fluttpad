@@ -35,6 +35,9 @@ class LaunchpadController implements LaunchpadReader {
     this._clockTimer.cancel();
     this._clockTimer = Timer.periodic(
         Duration(milliseconds: (60000 / (tempo * 24)).round()), (timer) {
+      if (timer.tick == 3) {
+        timer.cancel();
+      }
       this
           ._midiCommand
           .sendData(Uint8List.fromList([248]), deviceId: this.device.id);
@@ -106,9 +109,33 @@ class LaunchpadController implements LaunchpadReader {
       [LaunchpadLightMode mode = LaunchpadLightMode.STATIC]) {
     final midiAddress = _pointToMidiAddress(x, y);
     this._colorValues[midiAddress] = color;
-    this
-        ._midiCommand
-        .sendData(Uint8List.fromList([mode.value, midiAddress, color.value]));
+    if (mode == LaunchpadLightMode.FLASH) {
+      var dimmedColor = LaunchpadColor.OFF;
+      try {
+        dimmedColor = color.dimmed;
+      } catch (e) {
+        // color isn't dimmable
+      }
+
+      this._midiCommand.sendData(Uint8List.fromList([
+            240,
+            0,
+            32,
+            41,
+            2,
+            13,
+            3,
+            1,
+            midiAddress,
+            color.value,
+            dimmedColor.value,
+            247
+          ]));
+    } else {
+      this
+          ._midiCommand
+          .sendData(Uint8List.fromList([mode.value, midiAddress, color.value]));
+    }
   }
 
   LaunchpadColor getColor(int x, int y) {
